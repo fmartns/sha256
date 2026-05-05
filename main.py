@@ -76,11 +76,51 @@ def ROR(x, y):
 
 # Escolhe bits de y ou z com base em x (função Ch do SHA-256).
 def Ch(x, y, z):
+    # Usa x como uma máscara para escolher bits entre y e z.
+    #
+    # Para cada bit:
+    # - se o bit de x for 1, escolhe o bit de y;
+    # - se o bit de x for 0, escolhe o bit de z.
+    #
+    # O operador ^ é XOR:
+    # - retorna 1 quando os bits são diferentes;
+    # - retorna 0 quando os bits são iguais.
+    #
+    # O operador & é AND:
+    # - retorna 1 apenas quando os dois bits são 1;
+    # - caso contrário, retorna 0.
+    #
+    # Na expressão z ^ (x & (y ^ z)):
+    # 1. y ^ z descobre onde y e z são diferentes;
+    # 2. x & (...) usa x como máscara para decidir quais diferenças importam;
+    # 3. z ^ (...) aplica essas diferenças sobre z, transformando os bits escolhidos em y.
     return z ^ (x & (y ^ z))
 
 
 # Retorna o bit majoritário entre x, y e z (função Maj do SHA-256).
 def Maj(x, y, z):
+    # Usa x, y e z para descobrir qual bit aparece em maioria.
+    #
+    # Para cada posição de bit:
+    # - se pelo menos dois entre x, y e z forem 1, o resultado será 1;
+    # - se pelo menos dois entre x, y e z forem 0, o resultado será 0.
+    #
+    # Exemplo:
+    #   x = 1
+    #   y = 0
+    #   z = 1
+    #
+    # Como temos dois bits 1, a maioria é 1.
+    #
+    # Na expressão ((x | y) & z) | (x & y):
+    # 1. x | y verifica se x ou y possuem bit 1;
+    # 2. (x | y) & z verifica se z também participa de uma maioria com x ou y;
+    # 3. x & y verifica se x e y já formam maioria sozinhos;
+    # 4. o resultado final junta essas possibilidades.
+    #
+    # Em resumo:
+    # essa função retorna 1 quando existe maioria de bits 1
+    # e retorna 0 quando a maioria é de bits 0.
     return ((x | y) & z) | (x & y)
 
 
