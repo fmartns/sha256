@@ -189,3 +189,125 @@ def Gamma1(x):
     # Os valores 17, 19 e 10 são constantes fixas definidas pelo SHA-256.
     # Eles ajudam a misturar melhor os bits de x.
     return S(x, 17) ^ S(x, 19) ^ R(x, 10)
+
+# Constantes fixas do SHA-256 usadas nas 64 rodadas.
+K = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+    0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
+    0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
+    0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+    0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13,
+    0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3,
+    0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5,
+    0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+    0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+]
+
+
+def sha_transform(sha_info):
+    mask_32 = 0xffffffff
+    W = []
+
+    # Pegamos o bloco de dados que será processado.
+    data = sha_info["data"]
+
+
+    # Divide o bloco de 64 bytes em 16 palavras de 32 bits.
+    #
+    # No SHA-256, os dados são processados em blocos de 64 bytes.
+    # Cada byte tem 8 bits.
+    #
+    # Como 4 bytes formam 32 bits:
+    #   4 bytes * 8 bits = 32 bits
+    #
+    # Então pegamos os 64 bytes do bloco e agrupamos de 4 em 4:
+    #   64 bytes / 4 bytes = 16 palavras de 32 bits
+    for i in range(16):
+        # Para cada volta do loop, pegamos um grupo de 4 bytes.
+        #
+        # Exemplo:
+        #   i = 0 -> data[0], data[1], data[2], data[3]
+        #   i = 1 -> data[4], data[5], data[6], data[7]
+        #
+        # O 4 * i faz o índice andar de 4 em 4 bytes.
+        word = (
+            # Primeiro byte do grupo.
+            # Deslocamos 24 bits para a esquerda para colocá-lo
+            # na parte mais alta da palavra de 32 bits.
+            (data[4 * i] << 24)
+
+            # Segundo byte do grupo.
+            # Deslocamos 16 bits para a esquerda para colocá-lo
+            # na segunda parte da palavra.
+            | (data[4 * i + 1] << 16)
+
+            # Terceiro byte do grupo.
+            # Deslocamos 8 bits para a esquerda para colocá-lo
+            # na terceira parte da palavra.
+            | (data[4 * i + 2] << 8)
+
+            # Quarto byte do grupo.
+            # Ele já fica na parte mais baixa da palavra,
+            # então não precisa ser deslocado.
+            | data[4 * i + 3]
+        )
+
+        # Adiciona a palavra de 32 bits na lista W.
+        W.append(word)
+
+    # Expande as 16 palavras iniciais para 64 palavras.
+    for i in range(16, 64):
+        word = (
+            Gamma1(W[i - 2])
+            + W[i - 7]
+            + Gamma0(W[i - 15])
+            + W[i - 16]
+        ) & mask_32
+
+        W.append(word)
+
+    # Copia o estado atual do hash.
+    a, b, c, d, e, f, g, h = sha_info["digest"]
+
+    # Executa as 64 rodadas principais do SHA-256.
+    for i in range(64):
+        t1 = (
+            h
+            + Sigma1(e)
+            + Ch(e, f, g)
+            + K[i]
+            + W[i]
+        ) & mask_32
+
+        t2 = (
+            Sigma0(a)
+            + Maj(a, b, c)
+        ) & mask_32
+
+        h = g
+        g = f
+        f = e
+        e = (d + t1) & mask_32
+        d = c
+        c = b
+        b = a
+        a = (t1 + t2) & mask_32
+
+    # Soma o resultado ao digest atual.
+    sha_info["digest"] = [
+        (sha_info["digest"][0] + a) & mask_32,
+        (sha_info["digest"][1] + b) & mask_32,
+        (sha_info["digest"][2] + c) & mask_32,
+        (sha_info["digest"][3] + d) & mask_32,
+        (sha_info["digest"][4] + e) & mask_32,
+        (sha_info["digest"][5] + f) & mask_32,
+        (sha_info["digest"][6] + g) & mask_32,
+        (sha_info["digest"][7] + h) & mask_32,
+    ]
