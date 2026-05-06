@@ -146,19 +146,46 @@ def R(x, n):
 
 # Função Sigma0 usada na etapa principal de compressão.
 def Sigma0(x):
+    # Aplicamos a função S, que é uma abstração da função ROR,
+    # rotacionando x para a direita em 2, 13 e 22 bits.
+    # Depois combinamos os resultados usando XOR (^).
+    #
+    # Aplica rotações fixas definidas pelo SHA-256.
+    # Os valores 2, 13 e 22 fazem parte da especificação do algoritmo
+    # Eles ajudam a misturar melhor os bits de x.
     return S(x, 2) ^ S(x, 13) ^ S(x, 22)
 
 
 # Função Sigma1 usada na etapa principal de compressão.
 def Sigma1(x):
+    # Aplicamos a função S, que é uma abstração da função ROR,
+    # rotacionando x para a direita em 6, 11 e 25 bits.
+    # Depois combinamos os resultados usando XOR (^).
+    #
+    # Os valores 6, 11 e 25 são constantes fixas definidas pelo SHA-256.
+    # Eles ajudam a misturar melhor os bits de x.
     return S(x, 6) ^ S(x, 11) ^ S(x, 25)
 
 
 # Função Gamma0 (sigma0 minúscula) usada na expansão da mensagem.
 def Gamma0(x):
+    # Aplicamos a função S, que é uma abstração da função ROR,
+    # rotacionando x para a direita em 7 e 18 bits.
+    # Também aplicamos a função R, que faz shift lógico para a direita em 3 bits.
+    # Depois combinamos os resultados usando XOR (^).
+    #
+    # Os valores 7, 18 e 3 são constantes fixas definidas pelo SHA-256.
+    # Eles ajudam a misturar melhor os bits de x.
     return S(x, 7) ^ S(x, 18) ^ R(x, 3)
 
 
 # Função Gamma1 (sigma1 minúscula) usada na expansão da mensagem.
 def Gamma1(x):
+    # Aplicamos a função S, que é uma abstração da função ROR,
+    # rotacionando x para a direita em 17 e 19 bits.
+    # Também aplicamos a função R, que faz shift lógico para a direita em 10 bits.
+    # Depois combinamos os resultados usando XOR (^).
+    #
+    # Os valores 17, 19 e 10 são constantes fixas definidas pelo SHA-256.
+    # Eles ajudam a misturar melhor os bits de x.
     return S(x, 17) ^ S(x, 19) ^ R(x, 10)
