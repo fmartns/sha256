@@ -131,7 +131,17 @@ def S(x, n):
 
 # Shift lógico para a direita em n bits.
 def R(x, n):
-    return (x & 0xffffffff) >> n
+    # Usamos a mesma máscara de 32 bits explicada na função ROR.
+    # Ela garante que x fique limitado a 32 bits.
+    mask_32 = 0xffffffff
+
+    # Mantém apenas os últimos 32 bits de x.
+    x_32 = x & mask_32
+
+    # Desloca os bits para a direita em n posições.
+    # Diferente da rotação, os bits que saem pela direita são descartados
+    # e entram zeros pela esquerda.
+    return x_32 >> n
 
 
 # Função Sigma0 usada na etapa principal de compressão.
