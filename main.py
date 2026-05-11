@@ -263,6 +263,74 @@ def sha_transform(sha_info):
         W.append(word)
 
     # Expande as 16 palavras iniciais para 64 palavras.
+    #
+    # Até aqui, W possui apenas 16 palavras de 32 bits:
+    #
+    #   W[0], W[1], W[2], ..., W[15]
+    #
+    # Essas 16 palavras vieram diretamente do bloco original de 64 bytes.
+    # Porém, o SHA-256 precisa executar 64 rodadas, então ele precisa de
+    # 64 palavras no total.
+    #
+    # Por isso, a partir de W[16], cada nova palavra é criada misturando
+    # palavras anteriores.
+    #
+    # A fórmula usada é:
+    #
+    #   W[i] = Gamma1(W[i - 2])
+    #        + W[i - 7]
+    #        + Gamma0(W[i - 15])
+    #        + W[i - 16]
+    #
+    # Ou seja, para criar uma nova palavra, o algoritmo olha para posições
+    # antigas da lista W e combina esses valores.
+    #
+    # Exemplo quando i = 16:
+    #
+    #   W[16] = Gamma1(W[14])
+    #         + W[9]
+    #         + Gamma0(W[1])
+    #         + W[0]
+    #
+    # Então a palavra W[16] nasce da mistura de W[14], W[9], W[1] e W[0].
+    #
+    # As funções Gamma0 e Gamma1 embaralham os bits dessas palavras usando:
+    #
+    #   - rotações para a direita;
+    #   - shifts para a direita;
+    #   - XOR entre os resultados.
+    #
+    # Isso faz com que os bits das palavras antigas sejam espalhados e
+    # reorganizados antes de entrarem na soma.
+    #
+    # Exemplo simplificado:
+    #
+    #   W[0]  = parte inicial da mensagem
+    #   W[1]  = parte inicial da mensagem
+    #   W[9]  = parte inicial da mensagem
+    #   W[14] = parte inicial da mensagem
+    #
+    #   W[16] = mistura embaralhada dessas palavras
+    #
+    # Depois, quando i = 17:
+    #
+    #   W[17] = Gamma1(W[15])
+    #         + W[10]
+    #         + Gamma0(W[2])
+    #         + W[1]
+    #
+    # E assim por diante.
+    #
+    # Conforme o loop avança, as novas palavras também passam a ser usadas
+    # para criar outras palavras.
+    #
+    # Por exemplo, mais na frente:
+    #
+    #   W[32] pode depender de W[30], W[25], W[17] e W[16]
+    #
+    # Ou seja, a mensagem original vai sendo espalhada por toda a lista W.
+    # Isso ajuda o SHA-256 a fazer com que uma pequena mudança na entrada
+    # afete várias rodadas do cálculo.
     for i in range(16, 64):
         word = (
             Gamma1(W[i - 2])
